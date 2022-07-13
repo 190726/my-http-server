@@ -1,2 +1,8 @@
-package com.sk.server;public class Server {
+package com.sk.server;
+
+public class Server {
+
+    public static void main(String[] args) {
+
+    }
 }
