@@ -2,14 +2,14 @@ package com.sk.server;
 
 import java.io.IOException;
 import java.net.ServerSocket;
-import java.net.Socket;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.sk.server.http.HttpProtocolProcessor;
-import com.sk.server.http.HttpRequest;
-import com.sk.server.http.HttpResponse;
 import com.sk.server.http.HttpServerHandler;
 
 public class Server implements Runnable{
@@ -34,18 +34,24 @@ public class Server implements Runnable{
 	public void run() {
 		try (ServerSocket serverSocket = new ServerSocket(DEFAULT_PORT);){
     		handleStreamFromSocket(serverSocket);
-		} catch (IOException e) {
+		} catch (IOException | InterruptedException e) {
 			log.error(e.getMessage(), e);
 		}
 	}
 
-	private void handleStreamFromSocket(ServerSocket serverSocket) throws IOException {
+	private void handleStreamFromSocket(ServerSocket serverSocket) throws IOException, InterruptedException {
+		
+		ExecutorService threadPool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+		
 		while(!Thread.currentThread().isInterrupted()) {
-			log.info("request wating...");
-			Socket socket = serverSocket.accept();
-			Thread thread = new Thread(new HttpWorker(serverHandlerFactory.newServerHandlerInstance(socket)));
-			thread.start();
+			threadPool.execute(new HttpWorker(serverHandlerFactory.newServerHandlerInstance(serverSocket.accept())));
+//			Socket accept = serverSocket.accept();
+//			accept.setSoTimeout(8000); //8000ms 동안 소켓에서 읽혀지는 패킷이 없으면 java.net.SocketTimeoutException: Read timed out 발생
 		}
+		
+		threadPool.awaitTermination(5, TimeUnit.SECONDS);
+		threadPool.shutdown();
+		
 	}
 	
 	private class HttpWorker implements Runnable{
@@ -74,6 +80,7 @@ public class Server implements Runnable{
 	}
 	
 	public static void main(String[] args) {
+		
 		new Server(HttpServerHandler.newServerHandlerFactory())
 				.withProtocolProcessor(new HttpProtocolProcessor()).run();
 	}

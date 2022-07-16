@@ -4,6 +4,7 @@ import static java.nio.file.Files.readAllBytes;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -23,13 +24,24 @@ public class HttpProtocolProcessor implements ProtocolProcessor{
 		HttpRequest httpRequest = (HttpRequest)request;
 		HttpResponse httpResponse = new HttpResponse();
 		
-		String url = httpRequest.getRequestUrl();
-		System.out.println(url);
+		String requestPath = httpRequest.getRequestPath();
+		
+		//requestPath 를 가지고 처리할 Controller 와 매핑 시킨다.
 		
 		// classPath 상에 있는 자원 접근 방법1.
 		//InputStream inputStream = getClass().getResourceAsStream("/static/index.html");
 		try {
-			byte[] resource = readAllBytes(Paths.get(getClass().getResource("/static" + url).toURI()));
+			
+			URL url = getClass().getResource("/static" + requestPath);
+			if(url==null) requestPath = "/404.html";
+			url = getClass().getResource("/static" + requestPath);
+			
+			Path path = Paths.get(url.toURI());
+			
+			//if(isDirectory(path)) path = path404;
+			
+			byte[] resource = readAllBytes(path);
+			
 			httpResponse.setBody(resource);
 		} catch (IOException | URISyntaxException e) {
 			log.error("클리이언트 요청 파일 읽기중 오류 발생!");
