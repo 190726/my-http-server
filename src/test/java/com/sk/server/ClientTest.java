@@ -39,7 +39,7 @@ public class ClientTest {
 			writer.print("\r\n");
 			writer.flush();
 			
-			BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+			BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream(), "UTF-8"));
 			
 			StringBuilder lines = new StringBuilder();
 			

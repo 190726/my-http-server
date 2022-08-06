@@ -70,6 +70,4 @@ public class HttpRequestTest {
 			e.printStackTrace();
 		}
 	}
-	
-	
 }
